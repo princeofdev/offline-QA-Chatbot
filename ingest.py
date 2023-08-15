@@ -115,6 +115,8 @@ def split_documents(documents: list[Document]) -> tuple[list[Document], list[Doc
     help="Device to run on. (Default is cuda)",
 )
 def main(device_type):
+    logging.info(f"Working on {device_type} ...")
+
     documents=load_data(DATA_PATH)
     text_documents, python_documents = split_documents(documents)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=20)
