@@ -18,7 +18,8 @@ from constants import (
     INGEST_THREADS,
     DOCUMENT_MAP,
     EMBEDDING_MODEL_NAME,
-    CHROMA_SETTINGS
+    CHROMA_SETTINGS,
+    INGEST_FILE_PATH
 )
 
 def load_data(data_path: str) -> list[Document]:
@@ -39,6 +40,7 @@ def load_data(data_path: str) -> list[Document]:
 
     with ProcessPoolExecutor(n_workers) as executor:
         futures = []
+        
         for i in range(0, len(paths), chunksize):
             filepaths = paths[i : (i + chunksize)]
             future = executor.submit(load_document_batch, filepaths)
@@ -46,6 +48,15 @@ def load_data(data_path: str) -> list[Document]:
         for future in as_completed(futures):
             contents, _ = future.result()
             docs.extend(contents)
+
+    logging.info("Saving input data ...")
+    os.makedirs(os.path.dirname(INGEST_FILE_PATH), exist_ok=True)
+    with open(INGEST_FILE_PATH, "w", encoding="utf-8") as f:
+        for doc in docs:
+            f.write(doc.page_content)
+            f.write("\n")
+    
+    logging.info("Done.")
 
     return docs
 
@@ -62,6 +73,11 @@ def load_single_document(file_path: str) -> Document:
     logging.info("Loading single document ...")
 
     file_extension = os.path.splitext(file_path)[1]
+    
+    if(file_extension == ".txt"):
+        logging.info("Converting encoding of the text file ...")
+        change_encoding_to_ansi(file_path)
+    
     loader_class = DOCUMENT_MAP.get(file_extension)
 
     if loader_class:
@@ -84,6 +100,13 @@ def split_documents(documents: list[Document]) -> tuple[list[Document], list[Doc
             text_docs.append(doc)
 
     return text_docs, python_docs
+
+def change_encoding_to_ansi(file_path):
+    with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
+        content = file.read()
+
+    with open(file_path, "w", encoding="cp1252") as file:
+        file.write(content)
 
 @click.command()
 @click.option(
@@ -119,7 +142,9 @@ def main(device_type):
     logging.info(f"Working on {device_type} ...")
 
     documents=load_data(DATA_PATH)
+
     text_documents, python_documents = split_documents(documents)
+    
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=20)
     python_splitter = RecursiveCharacterTextSplitter.from_language(
         language=Language.PYTHON, chunk_size=1024, chunk_overlap=20

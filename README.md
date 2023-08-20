@@ -52,3 +52,31 @@ It then uses this setup to find answers to questions.
     # model_basename = "wizard-vicuna-13B.ggmlv3.q2_K.bin"
     # model_id = "TheBloke/orca_mini_3B-GGML"
     # model_basename = "orca-mini-3b.ggmlv3.q4_0.bin"
+
+# environment setup
+
+Install anaconda environment. 
+Anaconda3-2023.03-1-Windows-x86_64 was used.
+
+pip install -r requirements.txt
+pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.3.1/en_core_web_sm-2.3.1.tar.gz
+
+Optional if it was not installed
+pip install sentencepiece
+pip install protobuf==3.19.0
+
+# Run code
+
+Copy your text files to DATA directory.
+
+Run the following cmd
+    python ingest.py
+    python generate_questions.py question_count=10
+    python generate_answers.py
+
+# Available file types
+    .txt, .md, .py, .pdf, .csv, .docx, .doc"
+
+    For text file, ANSI encoding is default.
+
+HTML reading feature will come soon

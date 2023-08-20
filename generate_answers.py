@@ -22,7 +22,12 @@ from transformers import (
     pipeline,
 )
 
-from constants import CHROMA_SETTINGS, EMBEDDING_MODEL_NAME, PERSIST_PATH
+from constants import (
+    CHROMA_SETTINGS, 
+    EMBEDDING_MODEL_NAME, 
+    PERSIST_PATH,
+    QUESTION_FILE_PATH
+)
 
 
 def load_model(device_type, model_id, model_basename=None):
@@ -156,7 +161,7 @@ def load_model(device_type, model_id, model_basename=None):
 )
 def main(device_type, show_sources):
     logging.info(f"Running on: {device_type}")
-    logging.info(f"Display Source Documents set to: {show_sources}")
+    logging.info(f"Show sources: {show_sources}")
 
     embeddings = HuggingFaceInstructEmbeddings(model_name=EMBEDDING_MODEL_NAME, model_kwargs={"device": device_type})
 
@@ -194,29 +199,30 @@ def main(device_type, show_sources):
         chain_type_kwargs={"prompt": prompt, "memory": memory},
     )
 
-    # Interactive questions and answers
-    while True:
-        query = input("\nEnter a query: ")
-        if query == "exit":
-            break
-        # Get the answer from the chain
-        res = qa(query)
-        answer, docs = res["result"], res["source_documents"]
+    # while True:
+    #     query = input("\nEnter a query: ")
 
-        # Print the result
-        print("\n\n> Question:")
-        print(query)
-        print("\n> Answer:")
-        print(answer)
+    with open(QUESTION_FILE_PATH, "r", encoding='utf-8') as questions_file:
+        for line in questions_file:
+            query = line.strip()
 
-        if show_sources:  
-            # this is a flag that you can set to disable showing answers.
-            # # Print the relevant sources used for the answer
-            print("-------------------  SOURCE DOCUMENTS   -----------------------")
-            for document in docs:
-                print("\n> " + document.metadata["source"] + ":")
-                print(document.page_content)
-            print("-------------------  SOURCE DOCUMENTS   ------------------------")
+            if query == "exit":
+                break
+
+            res = qa(query)
+            answer, docs = res["result"], res["source_documents"]
+
+            print("\n\n> Question:")
+            print(query)
+            print("\n> Answer:")
+            print(answer)
+
+            if show_sources:  
+                print("--------  SOURCE DOCUMENTS   --------")
+                for document in docs:
+                    print("\n> " + document.metadata["source"] + ":")
+                    print(document.page_content)
+                print("--------  SOURCE DOCUMENTS   --------")
 
 
 if __name__ == "__main__":
