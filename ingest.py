@@ -12,14 +12,16 @@ from langchain.text_splitter import Language, RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.embeddings.huggingface import HuggingFaceInstructEmbeddings
 
+import chromadb
+
 from constants import (
     DATA_PATH,
     PERSIST_PATH,
     INGEST_THREADS,
     DOCUMENT_MAP,
     EMBEDDING_MODEL_NAME,
-    CHROMA_SETTINGS,
-    INGEST_FILE_PATH
+    INGEST_FILE_PATH,
+    CHROMA_SETTINGS
 )
 
 def load_data(data_path: str) -> list[Document]:
@@ -159,14 +161,14 @@ def main(device_type):
     )
 
     logging.info("Creating DB ...")
+
+    client = chromadb.PersistentClient(settings=CHROMA_SETTINGS, path=PERSIST_PATH)
+
     db = Chroma.from_documents(
-        texts,
-        embeddings,
-        persist_directory=PERSIST_PATH,
-        client_settings=CHROMA_SETTINGS,
+        client=client,
+        documents=texts,
+        embedding=embeddings,
     )
-    db.persist()
-    db = None
 
     logging.info("Done.")
 

@@ -13,6 +13,8 @@ from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Chroma
 
+import chromadb
+
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -23,10 +25,10 @@ from transformers import (
 )
 
 from constants import (
-    CHROMA_SETTINGS, 
     EMBEDDING_MODEL_NAME, 
     PERSIST_PATH,
-    QUESTION_FILE_PATH
+    QUESTION_FILE_PATH,
+    CHROMA_SETTINGS
 )
 
 
@@ -74,7 +76,7 @@ def load_model(device_type, model_id, model_basename=None):
                 trust_remote_code=True,
                 device="cuda:0",
                 use_triton=False,
-                quantize_config=None,
+                quantize_config=None
             )
     elif (
         device_type.lower() == "cuda"
@@ -167,10 +169,11 @@ def main(device_type, show_sources):
 
     logging.info("Loading DB ...")
 
+    client = chromadb.PersistentClient(settings=CHROMA_SETTINGS , path=PERSIST_PATH)
+
     db = Chroma(
-        persist_directory=PERSIST_PATH,
+        client=client,
         embedding_function=embeddings,
-        client_settings=CHROMA_SETTINGS,
     )
     retriever = db.as_retriever()
 

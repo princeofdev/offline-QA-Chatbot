@@ -23,7 +23,6 @@ DOCUMENT_MAP = {
 }
 
 CHROMA_SETTINGS = Settings(
-    chroma_db_impl="duckdb+parquet",
     persist_directory=PERSIST_PATH,
     anonymized_telemetry=False
 )
